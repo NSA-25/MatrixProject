@@ -489,6 +489,13 @@ void settingsLight() {
     }
   }
 }
+const byte arduinoMaxVal = 255;
+const byte scoreIndexMulti = 10;
+const byte scoreMemorySize = 5;
+const byte nameMemorySize = 10;
+const int endGameDelay = 3000;
+const byte maxWinners = 5;
+const int highscoreDelay = 3000;
 
 byte settingsSelection = 1;
 byte settingsMenu = 1;
@@ -608,40 +615,63 @@ void generateHighscoresScreen() {
   lcd.write(byte(arrowUpIndex));
 }
 void highscores() {
-  generateHighscoresScreen();
-  byte currentWinner = 0;
-  while (true) {
-    xValue = analogRead(pinX);
-    yValue = analogRead(pinY);
-    joyMoveBack();
-    if (!joyMoved) {
-      if (moveUp() && currentWinner == 0) {
-        state = menuState;
-        return;
-      }
-      if (moveRight()) {
-        if (!numberOfWinners) {        
-          lcd.setCursor(3, 0);
-          lcd.print("No Winners! ");  
-          lcd.setCursor(0, 1);
-          lcd.write(byte(arrowLeftIndex));
-          lcd.print("Back");
-          while (true) {
-              xValue = analogRead(pinX);
-              yValue = analogRead(pinY);
-              joyMoveBack();
-              if (moveLeft()) {
-                generateHighscoresScreen();
-                break;
-              }
-          }
-        }
-      }
-      // if (moveLeft()) {
+  // generateHighscoresScreen();
+  // byte currentWinner = 0;
+  // while (true) {
+  //   xValue = analogRead(pinX);
+  //   yValue = analogRead(pinY);
+  //   joyMoveBack();
+  //   if (!joyMoved) {
+  //     if (moveUp() && currentWinner == 0) {
+  //       state = menuState;
+  //       return;
+  //     }
+  //     if (moveRight()) {
+  //       if (!numberOfWinners) {        
+  //         lcd.setCursor(0, 0);
+  //         lcd.print("No Winners! ");  
+  //         lcd.setCursor(0, 1);
+  //         lcd.write(byte(arrowLeftIndex));
+  //         lcd.print("Back");
+  //         while (true) {
+  //             xValue = analogRead(pinX);
+  //             yValue = analogRead(pinY);
+  //             joyMoveBack();
+  //             if (moveLeft()) {
+  //               generateHighscoresScreen();
+  //               break;
+  //             }
+  //         }          
+  //       }
+  //       if (currentWinner != 5) {
+  //         currentWinner++;
+  //         lcd.setCursor(0, 0);
+  //         String localWinnerName = readName(numberOfWinnersAddress+(currentWinner-1)*nameSize);
+  //         lcd.print(localWinnerName);
+  //         lcd.setCursor(0, 1);
+  //         int localWinnerScore = EEPROM.read(scoreStartIndex + scoreMemorySize*(currentWinner-1));
+  //         if (localWinnerScore = 255) {
+  //           byte iter = 0;
+  //           while(true) {
+  //             byte tempScore = EEPROM.read(scoreStartIndex + scoreMemorySize*(currentWinner-1) + ++iter);
+  //             localWinnerScore += tempScore;
+  //             if (tempScore < 255) {
+  //               break;
+  //             }
+  //           }
+  //         }
+  //         lcd.print(localWinnerScore);
+  //         lcd.setCursor(0, 6);
+  //         lcd.write(byte(arrowLeftIndex))
+  //         lcd.wr
+  //       }  
+  //     }
+  //     // if (moveLeft()) {
          
-      // }
-    }
-  }
+  //     // }
+  //   }
+  // }
+  state = menuState;
 }
 
 
@@ -670,7 +700,7 @@ void about() {
         lcd.print("Classic Tetris!");
         lcd.write(byte(2));
         lcd.setCursor(0, 1);
-        lcd.print("Form lines!");
+        lcd.print("Fill rows!");
       }
       if (currentAbout == 1) {
         lcd.setCursor(0, 0);
@@ -696,14 +726,6 @@ byte gameMatrix[matrixSize][matrixSize] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0}
 };
-
-const byte arduinoMaxVal = 255;
-const byte scoreIndexMulti = 10;
-const byte scoreMemorySize = 5;
-const byte nameMemorySize = 10;
-const int endGameDelay = 3000;
-const byte maxWinners = 5;
-const int highscoreDelay = 3000;
 
 void displayWinnerScreen() {
   lcd.clear();
@@ -746,6 +768,8 @@ void endGame(){
     }
     EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize+iter, score);
     displayWinnerScreen();
+    numberOfWinners++;
+    EEPROM.update(numberOfWinnersAddress, numberOfWinners);    
   }
   else {
     byte winnerPlace = 5;
@@ -771,17 +795,17 @@ void endGame(){
       for (byte i = 0; i < nameMemorySize; i++) {
         EEPROM.update(nameStartIndex + i + winnerPlace*nameMemorySize, name[i]);
       }
-    }
-    byte iter = 0;
-    if (score > 255) { 
-      while (score > 255) {
-        EEPROM.update(scoreStartIndex + winnerPlace*scoreMemorySize + iter, score);
-        iter++;
-        score -= 255;        
+      displayWinnerScreen();
+      byte iter = 0;
+      if (score > 255) { 
+        while (score > 255) {
+          EEPROM.update(scoreStartIndex + winnerPlace*scoreMemorySize + iter, score);
+          iter++;
+          score -= 255;        
+        }
       }
-    }
-    EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize + iter, score);
-    displayWinnerScreen();
+        EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize + iter, score);
+      }
   }
   lcd.clear();
   lcd.setCursor(1, 0);
@@ -1271,8 +1295,8 @@ void generateInitialBlocks() {
     }
     lc.setLed(0, 0, col, true);    
     gameMatrix[0][col] = 1;
-    lc.setLed(0, matrixSize-1, col, true);    
-    gameMatrix[matrixSize-1][col] = 1;
+    lc.setLed(0, matrixSize-1, col, false);    
+    gameMatrix[matrixSize-1][col] = false;
   }
 }
 
@@ -1438,7 +1462,7 @@ void startGame() {
 
 String readName(byte address) {
   String localName = "          ";
-  for (int i = 0; i < nameSize; i++) {
+  for (byte i = 0; i < nameSize; i++) {
     localName[i] = EEPROM.read(address + i);
   }
   return localName;
