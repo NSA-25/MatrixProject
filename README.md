@@ -39,5 +39,5 @@ A 100k resistor for the MAX7219
 
 Picture 1: ![Picture one](PictureOne.jpg)
 
-Picture 2: ![Picture two](PictoreTwo.jpg)
+Picture 2: ![Picture two](PictureTwo.jpg)
 
