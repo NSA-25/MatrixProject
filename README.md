@@ -14,15 +14,24 @@ The player's objective is quite intuitive, try to complete as many horizontal li
 while tring to not overfill the screen (and paying close attention to the center).
 
 The game components are:
+
 Three breadboard (170, 400 and 830 respectively)
+
 A potentiometer
+
 Several wires
+
 An LCD
+
 An Arduino Uno
+
 An 8x8 Matrix display
+
 A MAX7219 driver
+
 A 330 resitor for the LCD
-a 100k resistor for the MAX7219
+
+A 100k resistor for the MAX7219
 
 
 
