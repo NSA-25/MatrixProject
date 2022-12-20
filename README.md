@@ -36,5 +36,4 @@ A 330 resitor for the LCD
 A 100k resistor for the MAX7219
 
 
-
-
+https://youtu.be/0VH4JV-nQ9k 
