@@ -1,7 +1,7 @@
 # MatrixProject
 
 In this repository I have a basic implementation of the Tetris game.
-Tetris was one of my favourite games growing up, as befofe the sametphone era
+Tetris was one of my favourite games growing up, as before the smartphone era
 the most accesible way for kids to play video games was on those "brick"
 consoles which contained a lot of games, also having my favourite, Tetris.
 
@@ -21,7 +21,8 @@ An LCD
 An Arduino Uno
 An 8x8 Matrix display
 A MAX7219 driver
-
+A 330 resitor for the LCD
+a 100k resistor for the MAX7219
 
 
 
