@@ -15,6 +15,8 @@ while tring to not overfill the screen (and paying close attention to the center
 
 The game components are:
 
+A joystick
+
 Three breadboard (170, 400 and 830 respectively)
 
 A potentiometer
