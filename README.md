@@ -33,7 +33,7 @@ A 330 resitor for the LCD
 
 An 100k resistor for the MAX7219
 
-A joytick
+A joystick
 
 [Link to a video showcasing functionality](https://www.youtube.com/watch?v=0VH4JV-nQ9k)
 
