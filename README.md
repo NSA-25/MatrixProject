@@ -35,7 +35,7 @@ A 100k resistor for the MAX7219
 
 A joytick
 
-[Link to a video showcasing functionality](/https://youtu.be/0VH4JV-nQ9k)
+[Link to a video showcasing functionality](https://www.youtube.com/watch?v=0VH4JV-nQ9k)
 
 Picture 1: ![Picture one](PictureOne.jpg)
 
