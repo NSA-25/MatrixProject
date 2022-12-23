@@ -11,7 +11,9 @@ one step and the player gains a point. When a block spawn location is blocked by
 The game also allows rotation for all blocks except O and I.
  
 The player's objective is quite intuitive, try to complete as many horizontal lines
-while tring to not overfill the screen (and paying close attention to the center).
+while avoiding overfilling the screen (and paying close attention to the center).
+
+Pieces are moved using the joystick (left, right and down). A block is rotated when the joystick is pressed.
 
 The game components are:
 
