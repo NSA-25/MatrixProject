@@ -1,4 +1,4 @@
-#include <LedControl.h> // need the library
+#include <LedControl.h>
 #include <LiquidCrystal.h>
 #include <EEPROM.h>
 
@@ -17,8 +17,11 @@ const byte pinSw = 2;
 const byte pinLED = 3;
 
 bool gameEnd = false;
+
+const byte driveNumbers = 1;
+
 LiquidCrystal lcd(RS, enable, d4, d5, d6, d7);
-LedControl lc = LedControl(dinPin, clockPin, loadPin, 1);
+LedControl lc = LedControl(dinPin, clockPin, loadPin, driveNumbers);
 // DIN, CLK, LOAD, No. DRIVER
 
 //memory management
@@ -127,6 +130,7 @@ bool buttonPress = false;
 
 const byte nameSize = 10;
 
+//functions which check if the joystick was moved past the threshold and one which checks if it was moved back
 void joyMoveBack() {
   if (yValue > minThreshold && yValue < maxThreshold && xValue > minThreshold && xValue < maxThreshold) {
     joyMoved = false;
@@ -173,7 +177,14 @@ const byte arrowRightIndex = 3;
 
 byte state = 0;
 
+const byte LCDUpLeft = 1;
+const byte LCDUpRight = 2;
+const byte LCDDownLeft = 3;
+const byte LCDDownRight = 4;
+
 const int menuDelay = 1000;
+
+//the first LCD screen
 void startMenu() {
   lcd.clear();
   lcd.setCursor(1, 0);
@@ -201,6 +212,7 @@ void checkPress() {
 }
 
 byte matrixTransitionDelaySettings = 10;
+
 void turnMatrixOn() {
   for (byte row = 0; row < matrixSize; row++) {
     for (byte col = 0; col < matrixSize; col++) {
@@ -234,10 +246,10 @@ void mainScreen() {
   lcd.print("Settings");
 
   switch (mainScreenSelection) {
-    case 1: lcd.setCursor(0, 0); lcd.write(byte(arrowRightIndex)); break;
-    case 2: lcd.setCursor(6, 0); lcd.write(byte(arrowRightIndex)); break;
-    case 3: lcd.setCursor(0, 1); lcd.write(byte(arrowRightIndex)); break;
-    case 4: lcd.setCursor(6, 1); lcd.write(byte(arrowRightIndex)); break;
+    case LCDUpLeft: lcd.setCursor(0, 0); lcd.write(byte(arrowRightIndex)); break;
+    case LCDUpRight: lcd.setCursor(6, 0); lcd.write(byte(arrowRightIndex)); break;
+    case LCDDownLeft: lcd.setCursor(0, 1); lcd.write(byte(arrowRightIndex)); break;
+    case LCDDownRight: lcd.setCursor(6, 1); lcd.write(byte(arrowRightIndex)); break;
   }
 
   while (true) {
@@ -255,42 +267,42 @@ void mainScreen() {
         break;        
       }
       if (moveUp()) {
-        if (mainScreenSelection == 3) {
-          mainScreenSelection = 1;
+        if (mainScreenSelection == LCDDownLeft) {
+          mainScreenSelection = LCDUpLeft;
           break;          
         }
-        if (mainScreenSelection == 4) {
-          mainScreenSelection = 2;
+        if (mainScreenSelection == LCDDownRight) {
+          mainScreenSelection = LCDUpRight;
           break;          
         }
       }
       if (moveDown()) {
-        if (mainScreenSelection == 1) {
-          mainScreenSelection = 3;
+        if (mainScreenSelection == LCDUpLeft) {
+          mainScreenSelection = LCDDownLeft;
           break;          
         }
-        if (mainScreenSelection == 2) {
-          mainScreenSelection = 4;
+        if (mainScreenSelection == LCDUpRight) {
+          mainScreenSelection = LCDDownRight;
           break;          
         }
       }
       if (moveLeft()) {
-        if (mainScreenSelection == 2) {
-          mainScreenSelection = 1;
+        if (mainScreenSelection == LCDUpRight) {
+          mainScreenSelection = LCDUpLeft;
           break;          
         }
-        if (mainScreenSelection == 4) {
-          mainScreenSelection = 3;
+        if (mainScreenSelection == LCDDownRight) {
+          mainScreenSelection = LCDDownLeft;
           break;          
         }
       }
       if (moveRight()) {
-        if (mainScreenSelection == 1) {
-          mainScreenSelection = 2;
+        if (mainScreenSelection == LCDUpLeft) {
+          mainScreenSelection = LCDUpRight;
           break;          
         }
-        if (mainScreenSelection == 3) {
-          mainScreenSelection = 4;
+        if (mainScreenSelection == LCDDownLeft) {
+          mainScreenSelection = LCDDownRight;
           break;          
         }
       }
@@ -306,6 +318,8 @@ bool isBlinked = false;
 bool pageExit = false;
 
 const byte nameIndexMax = 9;
+
+//blinks the selected char during name selection
 void blinkChar() {
   lcd.setCursor(nameIndex, 1);
   lcd.print(" ");
@@ -418,6 +432,7 @@ byte settingsLightSelection = 1;
 const byte matrixLightSelection = 1;
 const byte LCDLightSelection = 2;
 const byte exitSelection = 3;
+
 void settingsLight() {
   pageExit = false;
   while (!pageExit) {
@@ -431,8 +446,8 @@ void settingsLight() {
     lcd.setCursor(13, 1);
     lcd.print("Ext");
 
-    if (!matrixIsOn && settingsLightSelection == 1) { turnMatrixOn(); matrixIsOn = true;}
-    else if (matrixIsOn && settingsLightSelection != 1) { turnMatrixOff(); matrixIsOn = false;} 
+    if (!matrixIsOn && settingsLightSelection == matrixLightSelection) { turnMatrixOn(); matrixIsOn = true; }
+    else if (matrixIsOn && settingsLightSelection != matrixLightSelection) { turnMatrixOff(); matrixIsOn = false; } 
 
     switch (settingsLightSelection) {
       case matrixLightSelection: lcd.setCursor(0, 0); lcd.write(byte(arrowRightIndex)); break;
@@ -448,34 +463,34 @@ void settingsLight() {
       joyMoveBack();
     
       if (!joyMoved) {  
-        if (moveUp() && settingsLightSelection == 2) {
-          settingsLightSelection = 1;
+        if (moveUp() && settingsLightSelection == LCDLightSelection) {
+          settingsLightSelection = matrixLightSelection;
           break;
         }
-        if (moveDown() && settingsLightSelection == 1) {
-          settingsLightSelection = 2;
+        if (moveDown() && settingsLightSelection == matrixLightSelection) {
+          settingsLightSelection = LCDLightSelection;
           break;
         }
-        if (moveRight() && settingsLightSelection == 2) {
-          settingsLightSelection = 3;
+        if (moveRight() && settingsLightSelection == LCDLightSelection) {
+          settingsLightSelection = exitSelection;
           break;
         }
-        if (moveLeft() && settingsLightSelection == 3) {
-          settingsLightSelection = 2;
+        if (moveLeft() && settingsLightSelection == exitSelection) {
+          settingsLightSelection = LCDLightSelection;
           break;
         }
       }
       if (buttonPress) {
         if (settingsLightSelection == matrixLightSelection) {
           matrixLight++;
-          matrixLight %= 5;
+          matrixLight %= matrixLightMax + 1;
           if (!matrixLight) { matrixLight++; }
           lc.setIntensity(0, matrixLight*matrixLightMulti);
           EEPROM.update(matrixLightIndex, matrixLight);
         }
         else if (settingsLightSelection == LCDLightSelection) {
           LCDLight++;
-          LCDLight %= 5;
+          LCDLight %= LCDLightMax + 1;
           if (!LCDLight) { LCDLight++; }
           analogWrite(pinLED, LCDLight*LCDLightMulti);
           EEPROM.update(LCDLightIndex, LCDLight);
@@ -489,7 +504,7 @@ void settingsLight() {
     }
   }
 }
-const byte arduinoMaxVal = 255;
+const byte byteMaxVal = 255;
 const byte scoreIndexMulti = 10;
 const byte scoreMemorySize = 5;
 const byte nameMemorySize = 10;
@@ -498,10 +513,13 @@ const byte maxWinners = 5;
 const int highscoreDelay = 3000;
 
 byte settingsSelection = 1;
-byte settingsMenu = 1;
 
+const byte settingsMenuModeOne = 1;
+const byte settingsMenuModeTwo = 2;
+
+byte settingsMenu = settingsMenuModeOne;
 void settings() {
-  if (settingsMenu == 1) {
+  if (settingsMenu == settingsMenuModeOne) {
     lcd.clear();
     lcd.setCursor(1, 0);
     lcd.print("Name");
@@ -512,7 +530,7 @@ void settings() {
     lcd.setCursor(7, 1);
     lcd.print("Exit");
   }
-  else if (settingsMenu = 2) {
+  else if (settingsMenu = settingsMenuModeTwo) {
     lcd.clear();
     lcd.setCursor(1, 0);
     lcd.print("Light");
@@ -525,10 +543,10 @@ void settings() {
   }
 
   switch (settingsSelection) {
-    case 1: lcd.setCursor(0, 0); lcd.write(byte(arrowRightIndex)); break;
-    case 2: lcd.setCursor(6, 0); lcd.write(byte(arrowRightIndex)); break;
-    case 3: lcd.setCursor(0, 1); lcd.write(byte(arrowRightIndex)); break;
-    case 4: lcd.setCursor(6, 1); lcd.write(byte(arrowRightIndex)); break;
+    case LCDUpLeft: lcd.setCursor(0, 0); lcd.write(byte(arrowRightIndex)); break;
+    case LCDUpRight: lcd.setCursor(6, 0); lcd.write(byte(arrowRightIndex)); break;
+    case LCDDownLeft: lcd.setCursor(0, 1); lcd.write(byte(arrowRightIndex)); break;
+    case LCDDownRight: lcd.setCursor(6, 1); lcd.write(byte(arrowRightIndex)); break;
   }
 
   while (true) {
@@ -542,61 +560,61 @@ void settings() {
     if (!joyMoved) {
       if (buttonPress) {
         buttonPress = false;
-        if (settingsMenu == 1) {
+        if (settingsMenu == settingsMenuModeOne) {
           switch (settingsSelection) {
-            case 1: settingsName(); buttonPress = false; break;
-            case 2: settingsMenu = 2; break;
-            case 3: settingsLevel(); buttonPress = false; break;
-            case 4: state = menuState; break;
+            case LCDUpLeft: settingsName(); buttonPress = false; break;
+            case LCDUpRight: settingsMenu = settingsMenuModeTwo; break;
+            case LCDDownLeft: settingsLevel(); buttonPress = false; break;
+            case LCDDownRight: state = menuState; break;
           }          
         }
-        else if (settingsMenu == 2) {
+        else if (settingsMenu == settingsMenuModeTwo) {
           switch (settingsSelection) {
-            case 1: settingsLight(); buttonPress = false; break;
-            case 2: settingsMenu = 1; break;
-            // case 3: settingsSound(); buttonPress = false; break;
-            case 4: state = menuState; break;
+            case LCDUpLeft: settingsLight(); buttonPress = false; break;
+            case LCDUpRight: settingsMenu = settingsMenuModeOne; break;
+            // case LCDDownLeft: settingsSound(); buttonPress = false; break;
+            case LCDDownRight: state = menuState; break;
           }
         }
         break;        
       }
       if (moveUp()) {
-        if (settingsSelection == 3) {
-          settingsSelection = 1;
+        if (settingsSelection == LCDDownLeft) {
+          settingsSelection = LCDUpLeft;
           break;          
         }
-        if (settingsSelection == 4) {
-          settingsSelection = 2;
+        if (settingsSelection == LCDDownRight) {
+          settingsSelection = LCDUpRight;
           break;          
         }
       }
       if (moveDown()) {
-        if (settingsSelection == 1) {
-          settingsSelection = 3;
+        if (settingsSelection == LCDUpLeft) {
+          settingsSelection = LCDDownLeft;
           break;          
         }
-        if (settingsSelection == 2) {
-          settingsSelection = 4;
+        if (settingsSelection == LCDUpRight) {
+          settingsSelection = LCDDownRight;
           break;          
         }
       }
       if (moveLeft()) {
-        if (settingsSelection == 2) {
-          settingsSelection = 1;
+        if (settingsSelection == LCDUpRight) {
+          settingsSelection = LCDUpLeft;
           break;          
         }
-        if (settingsSelection == 4) {
-          settingsSelection = 3;
+        if (settingsSelection == LCDDownRight) {
+          settingsSelection = LCDDownLeft;
           break;          
         }
       }
       if (moveRight()) {
-        if (settingsSelection == 1) {
-          settingsSelection = 2;
+        if (settingsSelection == LCDUpLeft) {
+          settingsSelection = LCDUpRight;
           break;          
         }
-        if (settingsSelection == 3) {
-          settingsSelection = 4;
+        if (settingsSelection == LCDUpLeft) {
+          settingsSelection = LCDDownRight;
           break;          
         }
       }
@@ -614,6 +632,8 @@ void generateHighscoresScreen() {
   lcd.print("Back");
   lcd.write(byte(arrowUpIndex));
 }
+
+//unfinished
 void highscores() {
   // generateHighscoresScreen();
   // byte currentWinner = 0;
@@ -650,12 +670,12 @@ void highscores() {
   //         lcd.print(localWinnerName);
   //         lcd.setCursor(0, 1);
   //         int localWinnerScore = EEPROM.read(scoreStartIndex + scoreMemorySize*(currentWinner-1));
-  //         if (localWinnerScore = 255) {
+  //         if (localWinnerScore = byteMaxVal) {
   //           byte iter = 0;
   //           while(true) {
   //             byte tempScore = EEPROM.read(scoreStartIndex + scoreMemorySize*(currentWinner-1) + ++iter);
   //             localWinnerScore += tempScore;
-  //             if (tempScore < 255) {
+  //             if (tempScore < byteMaxVal) {
   //               break;
   //             }
   //           }
@@ -674,28 +694,30 @@ void highscores() {
   state = menuState;
 }
 
+const byte aboutModeGame = 0;
+const byte aboutModeCreator = 1;
 
 void about() {
-  byte currentAbout = 1;
+  byte currentAbout = aboutModeCreator;
   lcd.clear();
   while (true) {
     xValue = analogRead(pinX);
     yValue = analogRead(pinY);
     joyMoveBack();
     if (!joyMoved) {
-      if (moveUp() && currentAbout == 1) {
+      if (moveUp() && currentAbout == aboutModeCreator) {
         state = menuState;
         return;
       }
       if (moveLeft()) {
         lcd.clear();
-        currentAbout = 1;
+        currentAbout = aboutModeCreator;
       }
       if (moveRight()) {
         lcd.clear();
-        currentAbout = 0;
+        currentAbout = aboutModeGame;
       }     
-      if (currentAbout == 0) {
+      if (currentAbout == aboutModeGame) {
         lcd.setCursor(0, 0);
         lcd.print("Classic Tetris!");
         lcd.write(byte(2));
@@ -716,6 +738,7 @@ void about() {
   }
 }
 
+//used for checking which leds to light up
 byte gameMatrix[matrixSize][matrixSize] = {
   {0, 0, 0, 0, 0, 0, 0, 0},
   {0, 0, 0, 0, 0, 0, 0, 0},
@@ -738,17 +761,17 @@ void displayWinnerScreen() {
 }
 
 void endGame(){ 
-  if (numberOfWinners < 5) {
+  if (numberOfWinners < maxWinners) {
     byte winnerPlace = 1; 
     for (byte i = 0; i < numberOfWinners; i++) {
       int olderScore = EEPROM.read(scoreStartIndex+i*scoreIndexMulti);
       byte iter = 1;
-      if (olderScore = arduinoMaxVal) {
+      if (olderScore = byteMaxVal) {
         for (byte j = 0; j < scoreMemorySize; j++) {
           byte scoreContinuation = EEPROM.read(scoreStartIndex+i*scoreIndexMulti+iter);
           iter++;
           olderScore += scoreContinuation;
-          if (scoreContinuation != arduinoMaxVal) { break; }
+          if (scoreContinuation != byteMaxVal) { break; }
         }        
       }
       if (score <= olderScore) {
@@ -759,29 +782,29 @@ void endGame(){
       EEPROM.update(nameStartIndex + i + (winnerPlace-1)*nameMemorySize, name[i]);
     }
     byte iter = 0;
-    if (score > 255){
-      while (score > 255) {
-        EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize+iter, score);
+    if (score > byteMaxVal){
+      while (score > byteMaxVal) {
+        EEPROM.update(scoreStartIndex + (winnerPlace-1)*scoreMemorySize + iter, score);
         iter++;
-        score -= 255;        
+        score -= byteMaxVal;        
       }
     }
-    EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize+iter, score);
+    EEPROM.update(scoreStartIndex + (winnerPlace-1)*scoreMemorySize + iter, score);
     displayWinnerScreen();
     numberOfWinners++;
     EEPROM.update(numberOfWinnersAddress, numberOfWinners);    
   }
   else {
-    byte winnerPlace = 5;
-    for (int i = maxWinners; i < -1; i++) {
+    byte winnerPlace = maxWinners;
+    for (byte i = maxWinners; i < -1; i++) {
       int olderScore = EEPROM.read(scoreStartIndex+i*scoreIndexMulti);
       byte iter = 1;
-      if (olderScore = arduinoMaxVal) {
+      if (olderScore = byteMaxVal) {
         for (byte j = 0; j < scoreMemorySize; j++) {
-          byte scoreContinuation = EEPROM.read(scoreStartIndex+i*scoreIndexMulti+iter);
+          byte scoreContinuation = EEPROM.read(scoreStartIndex+i*scoreIndexMulti + iter);
           iter++;
           olderScore += scoreContinuation;
-          if (scoreContinuation != arduinoMaxVal) { break; }
+          if (scoreContinuation != byteMaxVal) { break; }
         }        
       }
       if (score <= olderScore) {
@@ -791,20 +814,20 @@ void endGame(){
         winnerPlace--;
       }
     }
-    if (winnerPlace < 5) {
+    if (winnerPlace < maxWinners) {
       for (byte i = 0; i < nameMemorySize; i++) {
         EEPROM.update(nameStartIndex + i + winnerPlace*nameMemorySize, name[i]);
       }
       displayWinnerScreen();
       byte iter = 0;
-      if (score > 255) { 
-        while (score > 255) {
+      if (score > byteMaxVal) { 
+        while (score > byteMaxVal) {
           EEPROM.update(scoreStartIndex + winnerPlace*scoreMemorySize + iter, score);
           iter++;
-          score -= 255;        
+          score -= byteMaxVal;        
         }
       }
-        EEPROM.update(scoreStartIndex+(winnerPlace-1)*scoreMemorySize + iter, score);
+        EEPROM.update(scoreStartIndex + (winnerPlace-1)*scoreMemorySize + iter, score);
       }
   }
   lcd.clear();
@@ -817,8 +840,8 @@ void endGame(){
   delay(endGameDelay);
   turnMatrixOff();
   gameEnd = true;
-  for (int row = 0; row < matrixSize; row++) {
-    for (int col = 0; col < matrixSize; col++) {
+  for (byte row = 0; row < matrixSize; row++) {
+    for (byte col = 0; col < matrixSize; col++) {
       gameMatrix[row][col] = 0;
 
     }
@@ -864,14 +887,15 @@ const byte idO = 5;
 const byte idI = 6;
 
 const byte rotations[numberOfPieces] = {4, 2, 4, 2, 4, 0, 2};
-// const byte rotationsT = 4;
-// const byte rotationsZ = 2;
-// const byte rotationsL = 4;
-// const byte rotationsS = 2;
-// const byte rotationsJ = 4;
-// const byte rotationsO = 0;
-// const byte rotationsI = 2;
+//rotationsT = 4
+//rotationsZ = 2
+//rotationsL = 4
+//rotationsS = 2
+//rotationsJ = 4
+//rotationsO = 0
+//rotationsI = 2
 
+//Blocks are represented in four matrices to account for all possible rotations
 const byte blocksRep1[blockRepSize][blockCols][blockCols] = {
   {
     {0, 1, 0},
@@ -1013,6 +1037,7 @@ byte previousPiecePositions[pieceSize][pieceCoordSize] = {
   {0, 0}  
 };
 
+//helper function to add the created piece positions in the possitions and game matrixes
 void populatePositions(byte r1, byte c1, byte r2, byte c2, byte r3, byte c3, byte r4, byte c4) {
     piecePositions[0][0] = r1;
     piecePositions[0][1] = c1;
@@ -1042,10 +1067,16 @@ const byte directionSize = 8;
 const byte blockSize = 3;
 const byte rotationsSize = 4;
 
+//row, column
+//up-left, up, up-right, left, right, down-left, down, down-right
+//avaiable for this matrix specific orientation (1088AS sign on the right)
 const int directions[matrixSize][pieceCoordSize] = {
   {-1, 1}, {0, 1}, {1, 1}, {-1, 0}, {1, 0}, {-1, -1}, {0, -1}, {1, -1}
 };
 
+// the function used to rotate a piece. It checks all possible directions next to the center of the piece to see if the space needed for rotation is occupied.
+// if it's occupied there will be a return statement and the rotation won't take place (unless the occupied space is the old position of the piece before the rotation)
+// it unwrites the old position and adds the new in the positions and game matrix
 void rotate() {
   byte positionIndex = 0;
   byte directionIndex = 0;
@@ -1065,11 +1096,11 @@ void rotate() {
               }
             }
             else if (blocksRep2[blockId][i][j]) {
-              if (gameMatrix[currentBlockCenter[0]+directions[directionIndex][0]][currentBlockCenter[1]+directions[directionIndex][1]]) {
-                if (!isPiece(currentBlockCenter[0]+directions[directionIndex][0], currentBlockCenter[1]+directions[directionIndex][1])) { Serial.println("returned"); return; }
+              if (gameMatrix[currentBlockCenter[0] + directions[directionIndex][0]][currentBlockCenter[1] + directions[directionIndex][1]]) {
+                if (!isPiece(currentBlockCenter[0] + directions[directionIndex][0], currentBlockCenter[1] + directions[directionIndex][1])) { return; }
               }
-              newPos[positionIndex][0] = currentBlockCenter[0]+directions[directionIndex][0];
-              newPos[positionIndex][1] = currentBlockCenter[1]+directions[directionIndex][1];
+              newPos[positionIndex][0] = currentBlockCenter[0] + directions[directionIndex][0];
+              newPos[positionIndex][1] = currentBlockCenter[1] + directions[directionIndex][1];
               positionIndex++;
             }
             directionIndex++;
@@ -1089,29 +1120,11 @@ void rotate() {
             }
           }
           else if (blocksRep3[blockId][i][j]) {
-            // Serial.print(currentBlockCenter[0]);
-            // Serial.print(" ");
-            // Serial.print(currentBlockCenter[1]);
-            // Serial.print(" ");
-            // Serial.print(positionIndex);
-            // Serial.print(" ");
-            // Serial.print(directionIndex);
-            // Serial.print(" ");
-            // Serial.print(piecePositions[positionIndex][0]);
-            // Serial.print(" ");
-            // Serial.print(piecePositions[positionIndex][1]);
-            // Serial.print(" ");
-            // Serial.print(directions[directionIndex][0]);
-            // Serial.print(" ");
-            // Serial.print(directions[directionIndex][1]);
-            // Serial.print("       ");
-            // Serial.print(" ");
-
-            if (gameMatrix[currentBlockCenter[0]+directions[directionIndex][0]][currentBlockCenter[1]+directions[directionIndex][1]]) {
-              if (!isPiece(currentBlockCenter[0]+directions[directionIndex][0], currentBlockCenter[1]+directions[directionIndex][1])) { Serial.println("returned"); return; }
+            if (gameMatrix[currentBlockCenter[0] + directions[directionIndex][0]][currentBlockCenter[1] + directions[directionIndex][1]]) {
+              if (!isPiece(currentBlockCenter[0] + directions[directionIndex][0], currentBlockCenter[1] + directions[directionIndex][1])) { return; }
             }
-            newPos[positionIndex][0] = currentBlockCenter[0]+directions[directionIndex][0];
-            newPos[positionIndex][1] = currentBlockCenter[1]+directions[directionIndex][1];
+            newPos[positionIndex][0] = currentBlockCenter[0] + directions[directionIndex][0];
+            newPos[positionIndex][1] = currentBlockCenter[1] + directions[directionIndex][1];
             positionIndex++;
           }
           directionIndex++;
@@ -1131,8 +1144,8 @@ void rotate() {
             }
           }
           else if (blocksRep4[blockId][i][j]) {
-            if (gameMatrix[currentBlockCenter[0]+directions[directionIndex][0]][currentBlockCenter[1]+directions[directionIndex][1]]) {
-              if (!isPiece(currentBlockCenter[0]+directions[directionIndex][0], currentBlockCenter[1]+directions[directionIndex][1])) { Serial.println("returned"); return; }
+            if (gameMatrix[currentBlockCenter[0] + directions[directionIndex][0]][currentBlockCenter[1] + directions[directionIndex][1]]) {
+              if (!isPiece(currentBlockCenter[0] + directions[directionIndex][0], currentBlockCenter[1] + directions[directionIndex][1])) { return; }
             }
             newPos[positionIndex][0] = currentBlockCenter[0]+directions[directionIndex][0];
             newPos[positionIndex][1] = currentBlockCenter[1]+directions[directionIndex][1];
@@ -1155,8 +1168,8 @@ void rotate() {
             }
           }
           else if (blocksRep1[blockId][i][j]) {
-            if (gameMatrix[currentBlockCenter[0]+directions[directionIndex][0]][currentBlockCenter[1]+directions[directionIndex][1]]) {
-              if (!isPiece(currentBlockCenter[0]+directions[directionIndex][0], currentBlockCenter[1]+directions[directionIndex][1])) { Serial.println("returned"); return; }
+            if (gameMatrix[currentBlockCenter[0] + directions[directionIndex][0]][currentBlockCenter[1] + directions[directionIndex][1]]) {
+              if (!isPiece(currentBlockCenter[0] + directions[directionIndex][0], currentBlockCenter[1] + directions[directionIndex][1])) { return; }
             }
             newPos[positionIndex][0] = currentBlockCenter[0]+directions[directionIndex][0];
             newPos[positionIndex][1] = currentBlockCenter[1]+directions[directionIndex][1];
@@ -1175,6 +1188,10 @@ void rotate() {
 }
 
 const byte rotationsHalf = 2;
+
+// generates a new block when called
+// if it fails to spawn a block the game ends
+// the block and its rotation are picked randomly
 void generateBlock() {
   //There was an issue with random(), it always spawned 0 during the first call
   //Calling the function here seemed to fix it
@@ -1182,13 +1199,13 @@ void generateBlock() {
   currentBlockCenter[1] = defaultCenterCol;
   random(numberOfPieces);
   blockId = random(numberOfPieces);
-  if (blockId != idO) {rotation = random(rotationsSize);}
+  if (blockId != idO) { rotation = random(rotationsSize); }
   if (blockId == idO) {
     lc.setLed(0, pieceStartRow, pieceStartCol, true);
-    lc.setLed(0, pieceStartRow+1, pieceStartCol, true);
-    lc.setLed(0, pieceStartRow, pieceStartCol-1, true);
-    lc.setLed(0, pieceStartRow+1, pieceStartCol-1, true);
-    if (gameMatrix[pieceStartRow][pieceStartCol]||gameMatrix[pieceStartRow+1][pieceStartCol]||gameMatrix[pieceStartRow][pieceStartCol-1]||gameMatrix[pieceStartRow-1][pieceStartCol-1]) {
+    lc.setLed(0, pieceStartRow + 1, pieceStartCol, true);
+    lc.setLed(0, pieceStartRow, pieceStartCol - 1, true);
+    lc.setLed(0, pieceStartRow + 1, pieceStartCol - 1, true);
+    if (gameMatrix[pieceStartRow][pieceStartCol] || gameMatrix[pieceStartRow + 1][pieceStartCol] || gameMatrix[pieceStartRow][pieceStartCol - 1] || gameMatrix[pieceStartRow-1][pieceStartCol - 1]) {
       endGame();
       return;
     }
@@ -1196,11 +1213,11 @@ void generateBlock() {
   }
   else if (blockId == idI) {
     if (rotation % rotationsHalf) {
-      lc.setLed(0, pieceStartRow-1, pieceStartCol, true);
+      lc.setLed(0, pieceStartRow - 1, pieceStartCol, true);
       lc.setLed(0, pieceStartRow, pieceStartCol, true);
-      lc.setLed(0, pieceStartRow+1, pieceStartCol, true);
-      lc.setLed(0, pieceStartRow+2, pieceStartCol, true);
-      if (gameMatrix[pieceStartRow-1][pieceStartCol]||gameMatrix[pieceStartRow][pieceStartCol]||gameMatrix[pieceStartRow+1][pieceStartCol]||gameMatrix[pieceStartRow+2][pieceStartCol]) {
+      lc.setLed(0, pieceStartRow + 1, pieceStartCol, true);
+      lc.setLed(0, pieceStartRow + 2, pieceStartCol, true);
+      if (gameMatrix[pieceStartRow - 1][pieceStartCol] || gameMatrix[pieceStartRow][pieceStartCol] || gameMatrix[pieceStartRow + 1][pieceStartCol] || gameMatrix[pieceStartRow + 2][pieceStartCol]) {
         endGame();
         return;
       }   
@@ -1208,11 +1225,11 @@ void generateBlock() {
     }
     else {
       lc.setLed(0, pieceStartRow, pieceStartCol, true);
-      lc.setLed(0, pieceStartRow, pieceStartCol-1, true);
-      lc.setLed(0, pieceStartRow, pieceStartCol-2, true);
-      lc.setLed(0, pieceStartRow, pieceStartCol-3, true);
+      lc.setLed(0, pieceStartRow, pieceStartCol - 1, true);
+      lc.setLed(0, pieceStartRow, pieceStartCol - 2, true);
+      lc.setLed(0, pieceStartRow, pieceStartCol - 3, true);
 
-      if (gameMatrix[pieceStartRow][pieceStartCol]||gameMatrix[pieceStartRow][pieceStartCol-1]||gameMatrix[pieceStartRow][pieceStartCol-2]||gameMatrix[pieceStartRow][pieceStartCol-3]) {
+      if (gameMatrix[pieceStartRow][pieceStartCol] || gameMatrix[pieceStartRow][pieceStartCol - 1] || gameMatrix[pieceStartRow][pieceStartCol - 2] || gameMatrix[pieceStartRow][pieceStartCol - 3]) {
         endGame();
         return;
       } 
@@ -1223,24 +1240,15 @@ void generateBlock() {
   else {
     byte posCoordinates[matrixSize];  
     byte posCoordinatesIndex = 0;    
-    if (rotations[blockId] == rotationsHalf) {rotation %= rotationsHalf;}
+    if (rotations[blockId] == rotationsHalf) { rotation %= rotationsHalf; }
     if (rotation == 0) {
       for (byte i = 0; i < blockCols; i++) {
         for (byte j = 0; j < blockCols; j++) {    
           if (blocksRep1[blockId][i][j]) {
-            lc.setLed(0, pieceStartRow+j, pieceStartCol-i, true);
-            posCoordinates[posCoordinatesIndex++] = pieceStartRow+j;
-            posCoordinates[posCoordinatesIndex++] = pieceStartCol-i;
+            lc.setLed(0, pieceStartRow + j, pieceStartCol - i, true);
+            posCoordinates[posCoordinatesIndex++] = pieceStartRow + j;
+            posCoordinates[posCoordinatesIndex++] = pieceStartCol - i;
           }
-          // Serial.print(blockId);
-          // Serial.print(" ");
-          // Serial.print(i);
-          // Serial.print(" ");
-          // Serial.print(j);
-          // Serial.print(" ");
-          // Serial.print(pieceStartRow+i);
-          // Serial.print(" ");
-          // Serial.println(pieceStartCol-j);
         }
       }
     }
@@ -1248,9 +1256,9 @@ void generateBlock() {
       for (byte i = 0; i < blockCols; i++) {
         for (byte j = 0; j < blockCols; j++) {    
           if (blocksRep2[blockId][i][j]) {
-            lc.setLed(0, pieceStartRow+j, pieceStartCol-i, true);
-            posCoordinates[posCoordinatesIndex++] = pieceStartRow+j;
-            posCoordinates[posCoordinatesIndex++] = pieceStartCol-i;
+            lc.setLed(0, pieceStartRow + j, pieceStartCol - i, true);
+            posCoordinates[posCoordinatesIndex++] = pieceStartRow + j;
+            posCoordinates[posCoordinatesIndex++] = pieceStartCol - i;
           }
         }
       }
@@ -1259,9 +1267,9 @@ void generateBlock() {
       for (byte i = 0; i < blockCols; i++) {
         for (byte j = 0; j < blockCols; j++) {    
           if (blocksRep3[blockId][i][j]) {
-            lc.setLed(0, pieceStartRow+j, pieceStartCol-i, true);
-            posCoordinates[posCoordinatesIndex++] = pieceStartRow+j;
-            posCoordinates[posCoordinatesIndex++] = pieceStartCol-i;
+            lc.setLed(0, pieceStartRow + j, pieceStartCol - i, true);
+            posCoordinates[posCoordinatesIndex++] = pieceStartRow + j;
+            posCoordinates[posCoordinatesIndex++] = pieceStartCol - i;
           }
         }
       }
@@ -1270,14 +1278,14 @@ void generateBlock() {
       for (byte i = 0; i < blockCols; i++) {
         for (byte j = 0; j < blockCols; j++) {    
           if (blocksRep4[blockId][i][j]) {
-            lc.setLed(0, pieceStartRow+j, pieceStartCol-i, true);
-            posCoordinates[posCoordinatesIndex++] = pieceStartRow+j;
-            posCoordinates[posCoordinatesIndex++] = pieceStartCol-i;
+            lc.setLed(0, pieceStartRow+j, pieceStartCol - i, true);
+            posCoordinates[posCoordinatesIndex++] = pieceStartRow + j;
+            posCoordinates[posCoordinatesIndex++] = pieceStartCol - i;
           }
         }
       }
     }
-    if (gameMatrix[posCoordinates[0]][posCoordinates[1]]||gameMatrix[posCoordinates[2]][posCoordinates[3]]||gameMatrix[posCoordinates[4]][posCoordinates[5]]||gameMatrix[posCoordinates[6]][posCoordinates[7]]) {
+    if (gameMatrix[posCoordinates[0]][posCoordinates[1]] || gameMatrix[posCoordinates[2]][posCoordinates[3]] || gameMatrix[posCoordinates[4]][posCoordinates[5]] || gameMatrix[posCoordinates[6]][posCoordinates[7]]) {
       endGame();
       return;
     } 
@@ -1285,18 +1293,20 @@ void generateBlock() {
   }
 }
 
+// depending on the level, several initial lines will be created
+// these will have several random leds on or off (some are hardcoded to prevent an initial full or empty line)
 void generateInitialBlocks() {
-  byte blockLines = gameLevel-1;
+  byte blockLines = gameLevel - 1;
   for (byte col = 0; col < blockLines; col++) {
-    for (byte row = 1; row < matrixSize-1; row++) {
+    for (byte row = 1; row < matrixSize - 1; row++) {
       byte randomLight = random(2);
       lc.setLed(0, row, col, randomLight);
       gameMatrix[row][col] = randomLight;      
     }
     lc.setLed(0, 0, col, true);    
     gameMatrix[0][col] = 1;
-    lc.setLed(0, matrixSize-1, col, false);    
-    gameMatrix[matrixSize-1][col] = false;
+    lc.setLed(0, matrixSize - 1, col, false);    
+    gameMatrix[matrixSize - 1][col] = false;
   }
 }
 
@@ -1317,20 +1327,23 @@ void unwritePiece() {
 }
 
 void movePieceHelper() {
-  for (byte i = 0; i < pieceSize; i++) {previousPiecePositions[i][0] = piecePositions[i][0]; previousPiecePositions[i][1] = piecePositions[i][1];}
+  for (byte i = 0; i < pieceSize; i++) { previousPiecePositions[i][0] = piecePositions[i][0]; previousPiecePositions[i][1] = piecePositions[i][1]; }
 }
 
+//used to check if an occupied space is the piece itself or not
 bool isPiece(byte row, byte col) {
   for (byte i = 0; i < pieceSize; i++) {
-    if (piecePositions[i][0] == row && piecePositions[i][1] == col) {return true;}
+    if (piecePositions[i][0] == row && piecePositions[i][1] == col) { return true; }
   }
   return false;
 }
 
+// called when a line is full
+// deletes the line and moves the following ones down by one
 void updateMatrix(byte line) {
   for (byte i = line; i < matrixSize - 1; i++) {
     for (byte j = 0; j < matrixSize; j++) {
-      gameMatrix[j][i] = gameMatrix[j][i+1];
+      gameMatrix[j][i] = gameMatrix[j][i + 1];
     }    
   }
   for (byte i = 0; i < matrixSize; i++) {
@@ -1343,6 +1356,9 @@ void updateMatrix(byte line) {
   }
 }
 
+// called when a piece can't move further down
+// if a line is full the score is incremented and it calls updateMatrix which deletes the line
+// after that a new piece is generated
 void pieceLanded() {
   bool fullLines[matrixSize] = {false, false, false, false, false, false, false, false};
   for (byte i = 0; i < matrixSize; i++) {
@@ -1352,7 +1368,6 @@ void pieceLanded() {
         fullLines[i] = false;
         break;
       }
-
     }
   }
   for (int i = matrixSize - 1; i > -1; i--) {
@@ -1378,7 +1393,7 @@ void movePieceLeft() {
   }
   movePieceHelper();
   currentBlockCenter[0]--;
-  for (byte i = 0; i < pieceSize; i++) {piecePositions[i][0]--;}
+  for (byte i = 0; i < pieceSize; i++) { piecePositions[i][0]--; }
   unwritePiece();
   writePiece();
 }
@@ -1393,7 +1408,7 @@ void movePieceRight() {
   }
   movePieceHelper();
   currentBlockCenter[0]++;
-  for (byte i = 0; i < pieceSize; i++) {piecePositions[i][0]++;}
+  for (byte i = 0; i < pieceSize; i++) { piecePositions[i][0]++; }
   unwritePiece();
   writePiece();
 }
@@ -1409,7 +1424,7 @@ void movePieceDown() {
   }
   movePieceHelper();
   currentBlockCenter[1]--;
-  for (byte i = 0; i < pieceSize; i++) {piecePositions[i][1]--;}
+  for (byte i = 0; i < pieceSize; i++) { piecePositions[i][1]--; }
   unwritePiece();
   writePiece();
 }
@@ -1426,6 +1441,7 @@ void displayGameLCD() {
   lcd.print("Score:");
   lcd.print(score);
 }
+
 void startGame() {
   displayGameLCD();
   if (gameLevel > gameLevelDefaultVal) {
@@ -1468,15 +1484,8 @@ String readName(byte address) {
   return localName;
 }
 
-// const byte matrixLightIndex = 0;
-// const byte lcdLightIndex = 1;
-// const byte soundIndex = 2;
-// const byte levelIndex = 3;
-// const byte currentNameIndex = 10;
-// const byte nameStartIndex = 100;
-// const byte scoreStartIndex = 200;
-
 const byte pinRandomGenerator = 13;
+
 void setup() {
   numberOfWinners = EEPROM.read(numberOfWinnersAddress);
   Serial.begin(9600);
@@ -1510,11 +1519,9 @@ void setup() {
   for (byte i = 0; i < nameSize; i++) {
     name[i] = memoryName[i];
   }
-  Serial.println(memoryName);
   lc.shutdown(0, false); // turn off power saving, enables display
   lc.setIntensity(0, matrixLight*matrixLightMulti);
-  analogWrite(pinLED, LCDLight*50);
-  // set up the LCD's number of columns and rows:
+  analogWrite(pinLED, LCDLight*LCDLightMulti);
   lcd.begin(16, 2);
 
   lcd.createChar(0, arrowUp);
