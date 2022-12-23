@@ -31,7 +31,7 @@ A MAX7219 driver
 
 A 330 resitor for the LCD
 
-A 100k resistor for the MAX7219
+An 100k resistor for the MAX7219
 
 A joytick
 
